@@ -21,7 +21,7 @@ type
     fsize: integer;
   public
     constructor create(size: integer);
-    function size: integer; override;
+    function Size: integer; override;
   end;
 
   TTreeStringNode = class(TTreeIntegerNode)
@@ -45,7 +45,7 @@ type
   protected
     fnodes: tobjectlist;
     fonnodeclick: tonnodeclickevent;
-    procedure Dopaintbuffer; override;
+    procedure DoPaintBuffer; override;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
   public
     constructor Create(aowner: tcomponent); override;

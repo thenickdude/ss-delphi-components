@@ -76,7 +76,7 @@ type
     property ColWidths[index: integer]: integer read getcolwidth write setcolwidth;
     property RowHeights[index: integer]: integer read getrowheight write setrowheight;
   public
-    function GetViewPortRect: TRect; override;
+    function GetViewportRect: TRect; override;
     procedure Resize; override;
     constructor Create(aOwner: Tcomponent); override;
   published

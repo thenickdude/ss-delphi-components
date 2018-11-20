@@ -1,0 +1,7 @@
+/Win32
+*.dcu
+/.idea
+*.identcache
+*.local
+*.stat
+/__history

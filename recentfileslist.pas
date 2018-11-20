@@ -19,8 +19,8 @@ type
     procedure add(filename: string);
     procedure savetokey(key: string);
     procedure loadfromkey(key: string);
-    constructor create(aowner:tcomponent); override;
-    destructor destroy; override;
+    constructor Create(aowner:tcomponent); override;
+    destructor Destroy; override;
   published
     property FontCanvas:tform read fcanvas write setcanvas;
     property ParentMenuItem:Tmenuitem read fmenu write fmenu;
