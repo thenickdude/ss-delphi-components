@@ -10,8 +10,8 @@ implementation
 
 procedure Register;
 begin
- RegisterComponents('Standard',[TSSCollapsePanelGroup,TSSCollapsePanel]);
- RegisterComponenteditor(TSSCollapsePanelGroup,TSSCollapsePanelEditor);
+ RegisterComponents('Sherlock Software',[TSSCollapsePanelGroup,TSSCollapsePanel]);
+ RegisterComponentEditor(TSSCollapsePanelGroup,TSSCollapsePanelEditor);
 end;
 
 end.

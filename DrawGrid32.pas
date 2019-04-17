@@ -18,22 +18,22 @@ type
 
   TCustomDrawGrid32 = class(TCustomPaintBox32)
   private
-    fxoffset, fyoffset: integer;
-    fviewablex, fviewabley: integer;
+    FXOffset, FYOffset: integer;
+    FViewableX, FViewableY: integer;
 
-    fcolor: tcolor32;
+    FColor: tcolor32;
 
-    frowcount, fcolcount: integer;
+    FRowCount, FColCount: integer;
 
-    ffixedrows, ffixedcols: integer;
+    FFixedRows, FFixedCols: integer;
 
-    fgridlinewidth: integer;
+    FGridlineWidth: integer;
+    FGridlineColor: TColor32;
 
-    fdefaultrowheight, fdefaultcolwidth: integer;
+    FDefaultRowHeight, FDefaultColWidth: integer;
 
-    fgridlinecolor: TColor32;
+    FColWidths, FRowHeights: array of integer;
 
-    fcolwidths, frowheights: array of integer;
     procedure SetGridLineColor(value: Tcolor32);
     procedure SetGridLineWidth(value: integer);
     procedure SetFixedRows(value: integer);
@@ -49,7 +49,7 @@ type
   protected
     HScroll, VScroll: TRangeBar;
 
-    procedure wheelmoved(Sender: TObject; Shift: TShiftState;
+    procedure WheelMoved(Sender: TObject; Shift: TShiftState;
       WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
 
     function CellRect(col, row: integer): TRect;
@@ -62,16 +62,16 @@ type
     procedure UpdateScrollBars; virtual;
     procedure DrawCell(col, row: Integer; cellrect: Trect; state: TDrawState32); virtual;
 
-    property DefaultColWidth: integer read fdefaultcolwidth write fdefaultcolwidth;
-    property DefaultRowHeight: integer read fdefaultrowheight write fdefaultrowheight;
+    property DefaultColWidth: integer read FDefaultColWidth write FDefaultColWidth;
+    property DefaultRowHeight: integer read FDefaultRowHeight write FDefaultRowHeight;
 
-    property GridLineWidth: integer read fgridlinewidth write setgridlinewidth;
-    property GridLineColor: TColor32 read fgridlinecolor write setgridlinecolor;
+    property GridLineWidth: integer read FGridlineWidth write setgridlinewidth;
+    property GridLineColor: TColor32 read FGridlineColor write setgridlinecolor;
 
-    property FixedRows: integer read ffixedrows write setfixedrows;
-    property FixedCols: integer read ffixedcols write setfixedcols;
-    property RowCount: integer read frowcount write setrowcount;
-    property ColCount: integer read fcolcount write setcolcount;
+    property FixedRows: integer read FFixedRows write setfixedrows;
+    property FixedCols: integer read FFixedCols write setfixedcols;
+    property RowCount: integer read FRowCount write setrowcount;
+    property ColCount: integer read FColCount write setcolcount;
 
     property ColWidths[index: integer]: integer read getcolwidth write setcolwidth;
     property RowHeights[index: integer]: integer read getrowheight write setrowheight;
@@ -84,18 +84,19 @@ type
     property Align;
     property Anchors;
     property Enabled;
-    property Color: TColor32 read fcolor write setcolor;
+    property Color: TColor32 read FColor write SetColor;
   end;
 
   TItemGrid32 = class(TCustomDrawGrid32)
   private
-    fselindex: integer;
+    FSelIndex: integer;
+    FItemCount: integer;
 
-    fitemcount: integer;
-    fondrawitem: TDrawItem32Event;
-    fonselectcell: TSelectItem32Event;
-    procedure setitemcount(value: integer);
-    procedure setSelIndex(value: integer);
+    FOnDrawItem: TDrawItem32Event;
+    FOnSelectCell: TSelectItem32Event;
+
+    procedure SetItemCount(value: integer);
+    procedure SetSelIndex(value: integer);
   protected
     procedure SelectCell(col, row: integer); override;
     procedure DrawCell(col, row: Integer; cellrect: Trect; state: TDrawState32); override;
@@ -103,19 +104,19 @@ type
     procedure Resize; override;
     constructor Create(aOwner: Tcomponent); override;
   published
-    property SelIndex: integer read fselindex write setselindex;
+    property SelIndex: integer read FSelIndex write SetSelIndex;
     property GridLineColor;
     property GridLineWidth default 0;
     property DefaultColWidth;
     property DefaultRowHeight;
-    property ItemCount: integer read fitemcount write setitemcount nodefault;
-    property OnDrawItem: TDrawItem32Event read fondrawitem write fondrawitem;
-    property OnSelectCell: TSelectItem32Event read fonselectcell write fonselectcell;
+    property ItemCount: integer read FItemCount write SetItemCount nodefault;
+    property OnDrawItem: TDrawItem32Event read FOnDrawItem write FOnDrawItem;
+    property OnSelectCell: TSelectItem32Event read FOnSelectCell write FOnSelectCell;
   end;
 
   TDrawGrid32 = class(TCustomDrawGrid32)
   private
-    fondrawcell: tdrawcell32event;
+    FOnDrawCell: TDrawCell32Event;
   protected
     procedure DrawCell(col, row: Integer; cellrect: Trect; state: TDrawState32); override;
   public
@@ -123,7 +124,7 @@ type
     property RowHeights;
     constructor Create(aOwner: Tcomponent); override;
   published
-    property OnDrawCell: TDrawCell32Event read fondrawcell write fondrawcell;
+    property OnDrawCell: TDrawCell32Event read FOnDrawCell write FOnDrawCell;
     property FixedRows;
     property FixedCols;
     property RowCount;
@@ -144,15 +145,15 @@ begin
     OnDrawCell(Buffer, col, row, cellrect, state);
 end;
 
-procedure TItemGrid32.setSelIndex(value: integer);
+procedure TItemGrid32.SetSelIndex(value: integer);
 var oldrect, newrect: trect;
 begin
   if value < 0 then value := -1; //Normalize
 
-  if fselindex <> value then begin
+  if FSelIndex <> value then begin
 
-    if fselindex <> -1 then begin
-      oldrect := cellrect(fselindex mod ColCount, fselindex div ColCount);
+    if FSelIndex <> -1 then begin
+      oldrect := cellrect(FSelIndex mod ColCount, FSelIndex div ColCount);
       InvalidateRect(Handle, @oldrect, true);
     end;
 
@@ -161,15 +162,15 @@ begin
       InvalidateRect(Handle, @newrect, true);
     end;
 
-    fselindex := value;
+    FSelIndex := value;
 
   end;
 end;
 
-procedure TItemGrid32.setitemcount(value: integer);
+procedure TItemGrid32.SetItemCount(value: integer);
 begin
-  if fitemcount <> value then begin
-    fitemcount := value;
+  if FItemCount <> value then begin
+    FItemCount := value;
     changed;
   end;
 end;
@@ -194,7 +195,7 @@ begin
   cellindex := row * ColCount + col;
 
   if assigned(ondrawitem) and (cellindex < ItemCount) then begin
-    if fselindex = cellindex then
+    if FSelIndex = cellindex then
       Include(state, dsSelected);
     OnDrawItem(buffer, cellindex, cellrect, state);
   end;
@@ -202,13 +203,10 @@ end;
 
 function TCustomDrawGrid32.GetViewPortRect: TRect;
 begin
-  with Result do
-  begin
-    Left := 0;
-    Top := 0;
-    Right := Width - SCROLLBARSIZE;
-    Bottom := Height - SCROLLBARSIZE;
-  end;
+  result.Left :=0;
+  result.top :=0;
+  result.Right := Max(Width - SCROLLBARSIZE, 0);
+  result.Bottom := Max(Height - SCROLLBARSIZE, 0);
 end;
 
 procedure TCustomDrawGrid32.Resize;
@@ -227,15 +225,16 @@ begin
 end;
 
 function TCustomDrawGrid32.CellRect(col, row: integer): TRect;
-var x, y: integer;
+var
+  x, y: integer;
   accx, accy: integer;
 begin
-  accx := -fxoffset;
+  accx := -FXOffset;
 
   for x := 0 to col - 1 do
     accx := accx + ColWidths[x] + GridLineWidth;
 
-  accy := -fyoffset;
+  accy := -FYOffset;
 
   for y := 0 to row - 1 do
     accy := accy + RowHeights[y] + GridLineWidth;
@@ -244,12 +243,13 @@ begin
 end;
 
 procedure TCustomDrawGrid32.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-var col, row: integer;
+var
+  col, row: integer;
   accx, accy: integer;
 begin
   if PtInRect(GetViewPortRect, point(x, y)) then begin
-    x := x + fxoffset;
-    y := y + fyoffset;
+    x := x + FXOffset;
+    y := y + FYOffset;
 
     accx := 0;
 
@@ -273,8 +273,8 @@ end;
 
 procedure TCustomDrawGrid32.scrollmoved(sender: Tobject);
 begin
-  fxoffset := round(HScroll.position);
-  fyoffset := round(VScroll.position);
+  FXOffset := round(HScroll.position);
+  FYOffset := round(VScroll.position);
   invalidate;
 end;
 
@@ -282,23 +282,23 @@ procedure TCustomDrawGrid32.Changed;
 var t1: integer;
 begin
   //our contained size could have changed (rows/cols). Update scrollbars and viewable
-  fviewablex := 0;
+  FViewableX := 0;
   for t1 := 0 to colcount - 1 do
-    fviewablex := fviewablex + colwidths[t1] + GridLineWidth;
+    FViewableX := FViewableX + colwidths[t1] + GridLineWidth;
 
-  HScroll.Range := fviewablex;
+  HScroll.Range := FViewableX;
 
-  fviewabley := 0;
+  FViewableY := 0;
   for t1 := 0 to rowcount - 1 do
-    fviewabley := fviewabley + rowheights[t1] + GridLineWidth;
+    FViewableY := FViewableY + rowheights[t1] + GridLineWidth;
 
-  VScroll.Range := fviewabley;
+  VScroll.Range := FViewableY;
 
-  HScroll.enabled := fviewablex > Width;
-  VScroll.enabled := fviewabley > Height;
+  HScroll.enabled := FViewableX > Width;
+  VScroll.enabled := FViewableY > Height;
 
   if not vscroll.enabled then vscroll.position := 0 else
-    VScroll.position := Min(VScroll.position, fviewabley);
+    VScroll.position := Min(VScroll.position, FViewableY);
 
   scrollmoved(nil);
 
@@ -307,28 +307,28 @@ end;
 
 function TCustomDrawGrid32.getrowheight(index: integer): integer;
 begin
-  result := frowheights[index];
+  result := FRowHeights[index];
 end;
 
 function TCustomDrawGrid32.getcolwidth(index: integer): integer;
 begin
-  result := fcolwidths[index];
+  result := FColWidths[index];
 end;
 
 procedure TCustomDrawGrid32.setrowheight(index: integer; value: integer);
 begin
-  frowheights[index] := value;
+  FRowHeights[index] := value;
 end;
 
 procedure TCustomDrawGrid32.setcolwidth(index: integer; value: integer);
 begin
-  fcolwidths[index] := value;
+  FColWidths[index] := value;
 end;
 
 procedure TCustomDrawGrid32.SetGridLineColor(value: Tcolor32);
 begin
-  if value <> fgridlinecolor then begin
-    fgridlinecolor := value;
+  if value <> FGridlineColor then begin
+    FGridlineColor := value;
     changed;
   end;
 end;
@@ -338,33 +338,33 @@ begin
   if value < 0 then
     value := 0;
 
-  if value <> fgridlinewidth then begin
-    fgridlinewidth := value;
+  if value <> FGridlineWidth then begin
+    FGridlineWidth := value;
     Changed;
   end;
 end;
 
 procedure TCustomDrawGrid32.SetFixedRows(value: integer);
 begin
-  ffixedrows := value;
+  FFixedRows := value;
   Changed;
 end;
 
 procedure TCustomDrawGrid32.SetFixedCols(value: integer);
 begin
-  ffixedcols := value;
+  FFixedCols := value;
   Changed;
 end;
 
 procedure TCustomDrawGrid32.SetRowCount(value: integer);
 var y: integer;
 begin
-  setlength(frowheights, value);
+  setlength(FRowHeights, value);
 
-  if value > frowcount then //we need to initialize some new col widths
-    for y := frowcount to value - 1 do
-      frowheights[y] := DefaultRowHeight;
-  frowcount := value;
+  if value > FRowCount then //we need to initialize some new col widths
+    for y := FRowCount to value - 1 do
+      FRowHeights[y] := DefaultRowHeight;
+  FRowCount := value;
 
   Changed;
 end;
@@ -372,19 +372,19 @@ end;
 procedure TCustomDrawGrid32.SetColCount(value: integer);
 var x: integer;
 begin
-  setlength(fcolwidths, value);
+  setlength(FColWidths, value);
 
-  if value > fcolcount then //we need to initialize some new col widths
-    for x := fcolcount to value - 1 do
-      fcolwidths[x] := DefaultColWidth;
+  if value > FColCount then //we need to initialize some new col widths
+    for x := FColCount to value - 1 do
+      FColWidths[x] := DefaultColWidth;
 
-  fcolcount := value;
+  FColCount := value;
   Changed;
 end;
 
 procedure TCustomDrawGrid32.SetColor(value: TColor32);
 begin
-  fcolor := value;
+  FColor := value;
   Changed;
 end;
 
@@ -397,7 +397,7 @@ begin
   //Do nothing. Descendants should choose how to draw cells
 end;
 
-procedure TCustomDrawGrid32.wheelmoved(Sender: TObject; Shift: TShiftState;
+procedure TCustomDrawGrid32.WheelMoved(Sender: TObject; Shift: TShiftState;
   WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
 begin
   Handled := true;
@@ -410,7 +410,7 @@ var leftx, topy, x, y: integer;
 begin
   buffer.Clear(Color);
 
-  if ((frowcount = 0) and (fcolcount = 0)) or (buffer.width = 0) then exit;
+  if ((FRowCount = 0) and (FColCount = 0)) or (buffer.width = 0) then exit;
   canvas.Brush.color := clBtnFace;
   canvas.FillRect(rect(width - VScroll.width, height - hscroll.height, width, height));
 
@@ -421,23 +421,23 @@ begin
   for x := 0 to ColCount - 1 do begin
 
     //will this column actually be visible?
-    if not ((leftx - fxoffset > width - 1) or (leftx + fcolwidths[x] + fgridlinewidth - fxoffset < 0)) then begin
+    if not ((leftx - FXOffset > width - 1) or (leftx + FColWidths[x] + FGridlineWidth - FXOffset < 0)) then begin
 
-      buffer.FillRectS(leftx - fxoffset + fcolwidths[x], 0, leftx - fxoffset + fcolwidths[x] + fgridlinewidth, fviewabley - fyoffset, GridLineColor);
+      buffer.FillRectS(leftx - FXOffset + FColWidths[x], 0, leftx - FXOffset + FColWidths[x] + FGridlineWidth, FViewableY - FYOffset, GridLineColor);
 
       topy := 0;
       for y := 0 to RowCount - 1 do begin
       //will this row be visible?
-        if (not ((topy - fyoffset > height - 1) or (topy + frowheights[y] + fgridlinewidth - fyoffset < 0))) then begin
-          buffer.FillRectS(0, topy - fyoffset + frowheights[y], fviewablex - fxoffset, topy - fyoffset + frowheights[y] + fgridlinewidth, GridLineColor);
+        if (not ((topy - FYOffset > height - 1) or (topy + FRowHeights[y] + FGridlineWidth - FYOffset < 0))) then begin
+          buffer.FillRectS(0, topy - FYOffset + FRowHeights[y], FViewableX - FXOffset, topy - FYOffset + FRowHeights[y] + FGridlineWidth, GridLineColor);
           //cell is at least partially visible
-          drawcell(x, y, rect(leftx - fxoffset, topy - fyoffset, leftx - fxoffset + fcolwidths[x], topy - fyoffset + frowheights[y]), []);
+          drawcell(x, y, rect(leftx - FXOffset, topy - FYOffset, leftx - FXOffset + FColWidths[x], topy - FYOffset + FRowHeights[y]), []);
 
         end;
-        inc(topy, frowheights[y] + fgridlinewidth);
+        inc(topy, FRowHeights[y] + FGridlineWidth);
       end;
     end;
-    inc(leftx, fcolwidths[x] + fgridlinewidth); //move to next column
+    inc(leftx, FColWidths[x] + FGridlineWidth); //move to next column
   end;
 
 end;
@@ -462,17 +462,15 @@ begin
   VScroll.top := 0;
   vscroll.width := SCROLLBARSIZE;
 
-  OnMouseWheel := wheelmoved;
+  OnMouseWheel := WheelMoved;
 
   Color := clWhite32;
   GridLineColor := clLightGray32;
 
-  fgridlinewidth := 1;
+  FGridlineWidth := 1;
 
   DefaultColWidth := 120;
   DefaultRowHeight := 80;
-
-  Resize;
 end;
 
 constructor TDrawGrid32.Create(aOwner: Tcomponent);
@@ -485,9 +483,10 @@ end;
 procedure TItemGrid32.resize;
 begin
   inherited;
-  //we'll need to reshuffle our items to fit
+
+  // We'll need to reshuffle our items to fit
   if DefaultColWidth = 0 then colcount := 0 else
-    colcount := min((Width - VScroll.width) div DefaultColWidth, fitemcount);
+    colcount := min((Width - VScroll.width) div DefaultColWidth, FItemCount);
 
   if ColCount = 0 then rowcount := 0 else
     rowcount := ceil(ItemCount / ColCount);
@@ -497,14 +496,14 @@ constructor TItemGrid32.Create(aOwner: Tcomponent);
 begin
   inherited create(aowner);
 
-  fselindex := -1;
-  fgridlinewidth := 0;
+  FSelIndex := -1;
+  FGridlineWidth := 0;
   ItemCount := 5;
 end;
 
 procedure Register;
 begin
-  RegisterComponents('Standard', [TDrawGrid32, TItemGrid32]);
+  RegisterComponents('Sherlock Software', [TDrawGrid32, TItemGrid32]);
 end;
 
 end.
